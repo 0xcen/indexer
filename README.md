@@ -1,2 +1,3 @@
-# A simple indexer for solana Program
+# A simple indexer for Solana programs
+
 

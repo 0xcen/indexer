@@ -10,13 +10,14 @@
     "build": "tsc src/main.ts"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.1.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.27.0",
     "@solana/web3.js": "^1.76.0",
     "@supabase/supabase-js": "^2.22.0",
-    "dotenv": "^16.0.3",
-    "helius-sdk": "^1.0.5"
+    "bn.js": "^5.2.1",
+    "dotenv": "^16.0.3"
   }
 }

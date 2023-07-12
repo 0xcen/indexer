@@ -1,11 +1,12 @@
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import { DataType, Store } from "./store";
 import { ACCOUNT_DISCRIMINATORS } from "./consts";
-import fs from "fs";
 import { Program, Wallet } from "@coral-xyz/anchor";
-import { Triggr } from "triggr";
+import { Triggr } from "src/triggr";
 import { TriggrProgram } from "./program";
 import keys from "../keypair.json";
+import { parseAccount } from "./utils/parseAccount";
+import fs from "fs";
 
 interface IndexerConfig {
   programId: PublicKey;
@@ -20,13 +21,17 @@ export class Indexer {
   store: Store;
 
   constructor(config: IndexerConfig) {
-    this.connection = new Connection(config.rpcUrl, "confirmed");
+    this.connection = new Connection(config.rpcUrl, {
+      wsEndpoint: config.rpcUrl.replace("http", "ws"),
+    });
     this.programId = config.programId;
     this.store = config.store;
 
-    const rawArray = new Uint8Array(keys);
+    const buffer = fs.readFileSync("./keypair.json", "utf-8");
 
-    let wallet = new Wallet(Keypair.fromSecretKey(rawArray));
+    const rawArray = new Uint8Array(JSON.parse(buffer));
+
+    let wallet = new Wallet(Keypair.fromSeed(rawArray.subarray(0, 32)));
 
     this.program = new TriggrProgram(this.connection, wallet).load();
   }
@@ -43,31 +48,33 @@ export class Indexer {
           account =>
             JSON.stringify(
               Array.from(new Uint8Array(account.account.data.subarray(0, 8)))
-            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.effect)
+            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.Effect)
         )
 
         .map(account => {
-          const decodedEffect = this.program.coder.accounts.decode(
-            "Effect",
+          const decodedEffect = parseAccount(
+            this.program,
+            account.pubkey.toBase58(),
             account.account.data
           );
 
-          return { ...decodedEffect, pubkey: account.pubkey };
+          return { ...decodedEffect };
         });
       const triggers = accounts
         .filter(
           account =>
             JSON.stringify(
               Array.from(new Uint8Array(account.account.data.subarray(0, 8)))
-            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.trigger)
+            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.Trigger)
         )
         .map(account => {
-          const decodedTrigger = this.program.coder.accounts.decode(
-            "Trigger",
+          const decodedTrigger = parseAccount(
+            this.program,
+            account.pubkey.toBase58(),
             account.account.data
           );
 
-          return { ...decodedTrigger, pubkey: account.pubkey };
+          return { ...decodedTrigger };
         });
 
       // write triggers and effects to separate json files
@@ -77,19 +84,19 @@ export class Indexer {
           acc =>
             JSON.stringify(
               Array.from(new Uint8Array(acc.account.data.subarray(0, 8)))
-            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.user)
+            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.User)
         )
         .map(account => {
-          const decodedUser = this.program.coder.accounts.decode(
-            "User",
+          const decodedUser = parseAccount(
+            this.program,
+            account.pubkey.toBase58(),
             account.account.data
           );
-          return { ...decodedUser, pubkey: account.pubkey };
-        });
 
-      console.log(`🌱 Found ${effects.length} effects`);
-      console.log(`🌱 Found ${triggers.length} triggers`);
-      console.log(`🌱 Found ${users.length} users`);
+          return {
+            ...decodedUser,
+          };
+        });
 
       const promises: Promise<void>[] = [];
 
@@ -102,7 +109,7 @@ export class Indexer {
       }
 
       if (users.length > 0) {
-        promises.push(this.store.add(DataType.User, users));
+        promises.push(this.store.add(DataType.User, users as any));
       }
 
       await Promise.all(promises);
@@ -113,7 +120,24 @@ export class Indexer {
     }
   }
 
-  start() {
-    // start server
+  async start() {
+    this.connection.onProgramAccountChange(
+      this.programId,
+      async change => {
+        console.log("🔁 Program account change detected");
+
+        const parsedAccount = parseAccount(
+          this.program,
+          change.accountId.toBase58(),
+          change.accountInfo.data
+        );
+        if (!parsedAccount) return;
+
+        await this.store.add(parsedAccount.dataType, parsedAccount?.data);
+
+        console.log(`✅ Added ${parsedAccount.dataType} record`);
+      },
+      "confirmed"
+    );
   }
 }

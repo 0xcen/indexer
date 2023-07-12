@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { Triggr } from "../triggr";
+import { Triggr } from "./triggr";
 import Idl from "../triggr.json";
 
 import * as anchor from "@coral-xyz/anchor";

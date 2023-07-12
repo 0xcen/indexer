@@ -1,10 +1,4 @@
 import { SupabaseClient, createClient } from "@supabase/supabase-js";
-import {
-  AccountInfo,
-  Connection,
-  PublicKey,
-  Transaction,
-} from "@solana/web3.js";
 
 // Create a single supabase client for interacting with your database
 
@@ -20,17 +14,11 @@ export class Store {
     this.client = createClient(db_url, db_key);
   }
 
-  async add(
-    type: DataType,
-    accountData: {
-      pubkey: PublicKey;
-      account: AccountInfo<Buffer>;
-    }[]
-  ) {
+  async add(type: DataType, parsedData: any | any[]) {
     try {
       const { data, error, status } = await this.client
         .from(type)
-        .upsert(accountData)
+        .upsert(parsedData)
         .select();
 
       if (status === 201 && data) {

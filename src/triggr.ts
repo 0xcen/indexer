@@ -204,6 +204,10 @@ export type Triggr = {
           "type": {
             "defined": "Lifetime"
           }
+        },
+        {
+          "name": "workflowTitle",
+          "type": "string"
         }
       ]
     },
@@ -447,7 +451,7 @@ export type Triggr = {
       "args": []
     },
     {
-      "name": "withdrawlFromPayer",
+      "name": "withdrawFromPayer",
       "accounts": [
         {
           "name": "authority",
@@ -477,7 +481,7 @@ export type Triggr = {
       "accounts": [
         {
           "name": "signer",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -491,6 +495,11 @@ export type Triggr = {
           "isSigner": false
         },
         {
+          "name": "instructionAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -498,10 +507,8 @@ export type Triggr = {
       ],
       "args": [
         {
-          "name": "instructions",
-          "type": {
-            "defined": "WorkflowStep"
-          }
+          "name": "ixIndex",
+          "type": "u8"
         }
       ]
     },
@@ -530,7 +537,7 @@ export type Triggr = {
         },
         {
           "name": "effect",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -570,14 +577,10 @@ export type Triggr = {
       }
     },
     {
-      "name": "workflowStep",
+      "name": "tempStorage",
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "ixIndex",
-            "type": "u8"
-          },
           {
             "name": "ixs",
             "type": {
@@ -633,6 +636,12 @@ export type Triggr = {
           {
             "name": "parentTrigger",
             "type": "publicKey"
+          },
+          {
+            "name": "lut",
+            "type": {
+              "option": "publicKey"
+            }
           }
         ]
       }
@@ -701,6 +710,10 @@ export type Triggr = {
             "type": {
               "defined": "Lifetime"
             }
+          },
+          {
+            "name": "workflowTitle",
+            "type": "string"
           }
         ]
       }
@@ -1313,6 +1326,10 @@ export const IDL: Triggr = {
           "type": {
             "defined": "Lifetime"
           }
+        },
+        {
+          "name": "workflowTitle",
+          "type": "string"
         }
       ]
     },
@@ -1556,7 +1573,7 @@ export const IDL: Triggr = {
       "args": []
     },
     {
-      "name": "withdrawlFromPayer",
+      "name": "withdrawFromPayer",
       "accounts": [
         {
           "name": "authority",
@@ -1586,7 +1603,7 @@ export const IDL: Triggr = {
       "accounts": [
         {
           "name": "signer",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -1600,6 +1617,11 @@ export const IDL: Triggr = {
           "isSigner": false
         },
         {
+          "name": "instructionAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1607,10 +1629,8 @@ export const IDL: Triggr = {
       ],
       "args": [
         {
-          "name": "instructions",
-          "type": {
-            "defined": "WorkflowStep"
-          }
+          "name": "ixIndex",
+          "type": "u8"
         }
       ]
     },
@@ -1639,7 +1659,7 @@ export const IDL: Triggr = {
         },
         {
           "name": "effect",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -1679,14 +1699,10 @@ export const IDL: Triggr = {
       }
     },
     {
-      "name": "workflowStep",
+      "name": "tempStorage",
       "type": {
         "kind": "struct",
         "fields": [
-          {
-            "name": "ixIndex",
-            "type": "u8"
-          },
           {
             "name": "ixs",
             "type": {
@@ -1742,6 +1758,12 @@ export const IDL: Triggr = {
           {
             "name": "parentTrigger",
             "type": "publicKey"
+          },
+          {
+            "name": "lut",
+            "type": {
+              "option": "publicKey"
+            }
           }
         ]
       }
@@ -1810,6 +1832,10 @@ export const IDL: Triggr = {
             "type": {
               "defined": "Lifetime"
             }
+          },
+          {
+            "name": "workflowTitle",
+            "type": "string"
           }
         ]
       }

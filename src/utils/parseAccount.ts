@@ -20,8 +20,11 @@ export const parseAccount = (
     const data = program.coder.accounts.decode(discriminator[0], rawData);
 
     return {
-      ...data,
-      pubkey: accountId,
+      data: {
+        ...data,
+        pubkey: accountId,
+      },
+      dataType: DataType[discriminator[0] as keyof typeof DataType],
     };
   }
 };

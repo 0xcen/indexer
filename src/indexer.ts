@@ -98,18 +98,41 @@ export class Indexer {
           };
         });
 
+      const effectsJson = JSON.stringify(effects);
+      const triggersJson = JSON.stringify(triggers);
+      const usersJson = JSON.stringify(users);
+
+      fs.writeFileSync("./effects.json", effectsJson);
+      fs.writeFileSync("./triggers.json", triggersJson);
+      fs.writeFileSync("./users.json", usersJson);
+
       const promises: Promise<void>[] = [];
 
       if (effects.length > 0) {
-        promises.push(this.store.add(DataType.Effect, effects));
+        promises.push(
+          this.store.add(
+            DataType.Effect,
+            effects.map(e => e.data)
+          )
+        );
       }
 
       if (triggers.length > 0) {
-        promises.push(this.store.add(DataType.Trigger, triggers));
+        promises.push(
+          this.store.add(
+            DataType.Trigger,
+            triggers.map(t => t.data)
+          )
+        );
       }
 
       if (users.length > 0) {
-        promises.push(this.store.add(DataType.User, users as any));
+        promises.push(
+          this.store.add(
+            DataType.User,
+            (users as any).map((u: any) => u.data)
+          )
+        );
       }
 
       await Promise.all(promises);
@@ -121,23 +144,28 @@ export class Indexer {
   }
 
   async start() {
-    this.connection.onProgramAccountChange(
-      this.programId,
-      async change => {
-        console.log("🔁 Program account change detected");
+    this.connection.onProgramAccountChange(this.programId, async change => {
+      console.log("🔁 Program account change detected");
 
-        const parsedAccount = parseAccount(
-          this.program,
-          change.accountId.toBase58(),
-          change.accountInfo.data
-        );
-        if (!parsedAccount) return;
+      const parsedAccount = parseAccount(
+        this.program,
+        change.accountId.toBase58(),
+        change.accountInfo.data
+      );
 
-        await this.store.add(parsedAccount.dataType, parsedAccount?.data);
+      // on change parse account and append to local json file
+      const latestChanges = fs.readFileSync("./latest.json", "utf-8");
 
-        console.log(`✅ Added ${parsedAccount.dataType} record`);
-      },
-      "confirmed"
-    );
+      fs.writeFileSync(
+        "./latest.json",
+        JSON.stringify([...JSON.parse(latestChanges), parsedAccount])
+      );
+
+      if (!parsedAccount) return;
+
+      await this.store.add(parsedAccount.dataType, parsedAccount);
+
+      console.log(`✅ Added ${parsedAccount.dataType} record`);
+    });
   }
 }

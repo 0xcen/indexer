@@ -15,6 +15,14 @@ export class Store {
   }
 
   async add(type: DataType, parsedData: any | any[]) {
+    console.log("🚀 ~ file: store.ts:18 ~ Store ~ add ~ DataType:", DataType);
+    console.log(
+      "🚀 ~ file: store.ts:18 ~ Store ~ add ~ parsedData:",
+      parsedData
+    );
+
+    const { data: nextData } = parsedData;
+    console.log("🚀 ~ file: store.ts:19 ~ Store ~ add ~ nextData:", nextData);
     try {
       const { data, error, status } = await this.client
         .from(type)

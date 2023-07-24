@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { Indexer } from "./indexer";
 import { Store } from "./store";
 import readline from "readline";
+import fs from "fs";
 import { PROGRAM_ID } from "./consts";
 dotenv.config();
 

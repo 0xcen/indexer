@@ -6,6 +6,7 @@ export enum DataType {
   User = "users",
   Effect = "effects",
   Trigger = "triggers",
+  Signature = "signatures",
 }
 
 export class Store {
@@ -15,14 +16,6 @@ export class Store {
   }
 
   async add(type: DataType, parsedData: any | any[]) {
-    console.log("🚀 ~ file: store.ts:18 ~ Store ~ add ~ DataType:", DataType);
-    console.log(
-      "🚀 ~ file: store.ts:18 ~ Store ~ add ~ parsedData:",
-      parsedData
-    );
-
-    const { data: nextData } = parsedData;
-    console.log("🚀 ~ file: store.ts:19 ~ Store ~ add ~ nextData:", nextData);
     try {
       const { data, error, status } = await this.client
         .from(type)
@@ -31,6 +24,72 @@ export class Store {
 
       if (status === 201 && data) {
         console.log(`✅ Added ${data.length} ${type} records`);
+      }
+      if (error) {
+        throw error;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async addSig(type: DataType, parsedData: any | any[]) {
+    try {
+      const { data, error, status } = await this.client
+        .from(type)
+        .insert(parsedData)
+        .select();
+
+      if (status === 201 && data) {
+        console.log(`✅ Added ${data.length} ${type} records`);
+      }
+      if (error) {
+        throw error;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async delete(pubkey: string | any[]) {
+    try {
+      for (let table of Object.values(DataType)) {
+        console.log("🚀 ~ file: store.ts:57 ~ Store ~ delete ~ table:", table);
+
+        if (table === DataType.Signature) continue;
+
+        const { error, status } = await this.client
+          .from(table)
+          .delete()
+          .eq("pubkey", pubkey);
+
+        if (status === 204) {
+          console.log(`✅ Deleted 1 ${table} record`);
+          return;
+        }
+        if (error) {
+          console.log(
+            "🚀 ~ file: store.ts:71 ~ Store ~ delete ~ error:",
+            error
+          );
+          continue;
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async getSignatures() {
+    try {
+      const { data, error, status } = await this.client
+        .from("signatures")
+        .select()
+        .order("id", { ascending: false })
+        .limit(1);
+
+      if (status === 200 && data) {
+        return data;
       }
       if (error) {
         throw error;

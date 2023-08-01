@@ -1,0 +1,18 @@
+{
+  "initializeProgram": {},
+  "updateServices": {},
+  "closeProgram": {},
+  "createUser": {},
+  "closeAccount": {},
+  "createEffect": {},
+  "createTrigger": {},
+  "updateEffect": {},
+  "executeEffect": {},
+  "updateTrigger": {},
+  "closeEffect": {},
+  "closeTrigger": {},
+  "closeUser": {},
+  "withdrawFromPayer": {},
+  "populateInstruction": {},
+  "createLut": {}
+}

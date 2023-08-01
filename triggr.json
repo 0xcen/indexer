@@ -407,6 +407,11 @@
           "isSigner": false
         },
         {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "triggerPda",
           "isMut": true,
           "isSigner": false
@@ -768,6 +773,10 @@
           {
             "name": "executed",
             "type": "bool"
+          },
+          {
+            "name": "instructionType",
+            "type": "string"
           }
         ]
       }
@@ -1110,8 +1119,5 @@
       "name": "UnsupportedRecurrencePattern",
       "msg": "Invalid recurrence pattern"
     }
-  ],
-  "metadata": {
-    "address": "41NuR2mieT98yDQpXmwDzBZ24sz9UMAieorCr8Mw9C8Q"
-  }
+  ]
 }

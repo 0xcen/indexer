@@ -407,6 +407,11 @@ export type Triggr = {
           "isSigner": false
         },
         {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "triggerPda",
           "isMut": true,
           "isSigner": false
@@ -768,6 +773,10 @@ export type Triggr = {
           {
             "name": "executed",
             "type": "bool"
+          },
+          {
+            "name": "instructionType",
+            "type": "string"
           }
         ]
       }
@@ -1529,6 +1538,11 @@ export const IDL: Triggr = {
           "isSigner": false
         },
         {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "triggerPda",
           "isMut": true,
           "isSigner": false
@@ -1890,6 +1904,10 @@ export const IDL: Triggr = {
           {
             "name": "executed",
             "type": "bool"
+          },
+          {
+            "name": "instructionType",
+            "type": "string"
           }
         ]
       }

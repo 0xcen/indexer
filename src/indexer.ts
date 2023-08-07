@@ -1,171 +1,88 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { DataType, Store } from "./store";
-import { ACCOUNT_DISCRIMINATORS } from "./consts";
-import { Program, Wallet } from "@coral-xyz/anchor";
-import { Triggr } from "src/triggr";
-import { TriggrProgram } from "./program";
-import keys from "../keypair.json";
+import { PublicKey } from "@solana/web3.js";
+import { TRIGGR_PROGRAM_ID } from "./consts";
+import { connection, program, store } from "./main";
+import { DataType } from "./store";
 import { parseAccount } from "./utils/parseAccount";
-import fs from "fs";
 
-interface IndexerConfig {
-  programId: PublicKey;
-  rpcUrl: string;
-  store: Store;
-}
+export const startIndexer = async () => {
+  // 1) get signatures from db
+  const sigs = await store.getSignatures();
+  console.log(`Fetched sig ${JSON.stringify(sigs, null, 2)} from db`);
 
-export class Indexer {
-  connection: Connection;
-  programId: PublicKey;
-  program: Program<Triggr>;
-  store: Store;
+  if (!sigs || sigs?.length === 0) return;
 
-  constructor(config: IndexerConfig) {
-    this.connection = new Connection(config.rpcUrl, {
-      wsEndpoint: config.rpcUrl.replace("http", "ws"),
-    });
-    this.programId = config.programId;
-    this.store = config.store;
-
-    const buffer = fs.readFileSync("./keypair.json", "utf-8");
-
-    const rawArray = new Uint8Array(JSON.parse(buffer));
-
-    let wallet = new Wallet(Keypair.fromSeed(rawArray.subarray(0, 32)));
-
-    this.program = new TriggrProgram(this.connection, wallet).load();
-  }
-
-  async seed() {
-    try {
-      // gpa
-      const accounts = await this.connection.getProgramAccounts(this.programId);
-
-      console.log(`🌱 Seeding store with ${accounts.length} accounts`);
-
-      const effects = accounts
-        .filter(
-          account =>
-            JSON.stringify(
-              Array.from(new Uint8Array(account.account.data.subarray(0, 8)))
-            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.Effect)
-        )
-
-        .map(account => {
-          const decodedEffect = parseAccount(
-            this.program,
-            account.pubkey.toBase58(),
-            account.account.data
-          );
-
-          return { ...decodedEffect };
-        });
-      const triggers = accounts
-        .filter(
-          account =>
-            JSON.stringify(
-              Array.from(new Uint8Array(account.account.data.subarray(0, 8)))
-            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.Trigger)
-        )
-        .map(account => {
-          const decodedTrigger = parseAccount(
-            this.program,
-            account.pubkey.toBase58(),
-            account.account.data
-          );
-
-          return { ...decodedTrigger };
-        });
-
-      // write triggers and effects to separate json files
-
-      const users = accounts
-        .filter(
-          acc =>
-            JSON.stringify(
-              Array.from(new Uint8Array(acc.account.data.subarray(0, 8)))
-            ) == JSON.stringify(ACCOUNT_DISCRIMINATORS.User)
-        )
-        .map(account => {
-          const decodedUser = parseAccount(
-            this.program,
-            account.pubkey.toBase58(),
-            account.account.data
-          );
-
-          return {
-            ...decodedUser,
-          };
-        });
-
-      const effectsJson = JSON.stringify(effects);
-      const triggersJson = JSON.stringify(triggers);
-      const usersJson = JSON.stringify(users);
-
-      fs.writeFileSync("./effects.json", effectsJson);
-      fs.writeFileSync("./triggers.json", triggersJson);
-      fs.writeFileSync("./users.json", usersJson);
-
-      const promises: Promise<void>[] = [];
-
-      if (effects.length > 0) {
-        promises.push(
-          this.store.add(
-            DataType.Effect,
-            effects.map(e => e.data)
-          )
-        );
-      }
-
-      if (triggers.length > 0) {
-        promises.push(
-          this.store.add(
-            DataType.Trigger,
-            triggers.map(t => t.data)
-          )
-        );
-      }
-
-      if (users.length > 0) {
-        promises.push(
-          this.store.add(
-            DataType.User,
-            (users as any).map((u: any) => u.data)
-          )
-        );
-      }
-
-      await Promise.all(promises);
-
-      console.log("✅ Store seeded");
-    } catch (error) {
-      console.error("Error seeding store: ", error);
+  const latestSigs = await connection.getSignaturesForAddress(
+    TRIGGR_PROGRAM_ID,
+    {
+      until: sigs[0].signature || undefined,
     }
+  );
+
+  console.log(`Fetched ${latestSigs.length} new signatures`);
+
+  if (!latestSigs || latestSigs.length === 0) {
+    console.log("No new signatures");
+    return;
   }
 
-  async start() {
-    this.connection.onProgramAccountChange(this.programId, async change => {
-      console.log("🔁 Program account change detected");
+  // 2) get transactions 50 LIMIT
+  const txs = await connection.getParsedTransactions(
+    latestSigs.map(data => data.signature),
+    {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 1,
+    }
+  );
 
-      const parsedAccount = parseAccount(
-        this.program,
-        change.accountId.toBase58(),
-        change.accountInfo.data
+  // 3) get writable and not signer accounts
+  const writableAccounts = txs.flatMap(tx => {
+    return tx!.transaction.message.accountKeys
+      .filter(key => !key.signer && key.writable && key)
+      .map(key => key.pubkey);
+  });
+
+  const uniqueWritableAccounts = [...new Set(writableAccounts)].map(
+    key => key && new PublicKey(key)
+  );
+
+  // 4) get account data
+  // You want to preserve the order here.
+  // if the account retuned is null the record should be deleted from the db
+  const accounts = await connection.getMultipleAccountsInfo(
+    uniqueWritableAccounts
+  );
+
+  // 5) parse account data
+  const parsedAccountData = [];
+
+  for (const [index, account] of accounts.entries()) {
+    if (!account) {
+      console.log(
+        `Account ${uniqueWritableAccounts[index].toBase58()} not found.`
       );
 
-      // on change parse account and append to local json file
-      const latestChanges = fs.readFileSync("./latest.json", "utf-8");
+      await store.delete(uniqueWritableAccounts[index].toBase58());
+      continue;
+    }
 
-      fs.writeFileSync(
-        "./latest.json",
-        JSON.stringify([...JSON.parse(latestChanges), parsedAccount])
-      );
+    const data = Buffer.from(account!.data);
 
-      if (!parsedAccount) return;
+    const accountData = parseAccount(
+      program,
+      uniqueWritableAccounts[index].toBase58(),
+      data
+    );
 
-      await this.store.add(parsedAccount.dataType, parsedAccount);
+    parsedAccountData.push(accountData);
 
-      console.log(`✅ Added ${parsedAccount.dataType} record`);
-    });
+    if (!accountData) continue;
+
+    await store.add(accountData.dataType, accountData.data);
   }
-}
+
+  if (sigs[0].signature === latestSigs[0]) return;
+
+  await store.addSig(DataType.Signature, {
+    signature: latestSigs[sigs.length - 1].signature,
+  });
+};

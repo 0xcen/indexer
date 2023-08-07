@@ -44,6 +44,7 @@ export class Store {
         console.log(`✅ Added ${data.length} ${type} records`);
       }
       if (error) {
+        console.log("🚀 ~ file: store.ts:39 ~ Store ~ addSig ~ error:", error);
         throw error;
       }
     } catch (e) {
@@ -52,20 +53,17 @@ export class Store {
   }
 
   async delete(pubkey: string | any[]) {
-    try {
-      for (let table of Object.values(DataType)) {
-        console.log("🚀 ~ file: store.ts:57 ~ Store ~ delete ~ table:", table);
-
+    for (let table of Object.values(DataType)) {
+      try {
         if (table === DataType.Signature) continue;
-
-        const { error, status } = await this.client
+        const { error, status, statusText } = await this.client
           .from(table)
           .delete()
           .eq("pubkey", pubkey);
 
         if (status === 204) {
-          console.log(`✅ Deleted 1 ${table} record`);
-          return;
+          console.log(`✅ Deleted 1 record ${pubkey} from table ${table}`);
+          continue;
         }
         if (error) {
           console.log(
@@ -74,9 +72,9 @@ export class Store {
           );
           continue;
         }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
   }
 

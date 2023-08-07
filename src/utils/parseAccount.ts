@@ -1,8 +1,6 @@
 import { Program } from "@coral-xyz/anchor";
 import { ACCOUNT_DISCRIMINATORS } from "../consts";
 import { DataType } from "../store";
-import * as anchor from "@coral-xyz/anchor";
-import BigInt from "big-integer";
 import { Triggr } from "../triggr";
 
 export const parseAccount = (
@@ -23,8 +21,6 @@ export const parseAccount = (
 
     switch (discriminator[0]) {
       case "Trigger":
-        console.log("Trigger");
-
         parsedData = {
           created_at: data.createdAt,
           usage_stats: data.usageStats,
@@ -38,7 +34,6 @@ export const parseAccount = (
         };
         break;
       case "Effect":
-        console.log("Effect");
         parsedData = {
           ixs: data.ixs,
           status: data.status,
@@ -49,10 +44,10 @@ export const parseAccount = (
           own_index: data.ownIndex,
           parent_trigger: data.parentTrigger,
           last_updated_time: data.lastUpdatedTime,
+          lut: data.lut,
         };
         break;
       case "User":
-        console.log("User");
         parsedData = {
           trigger_count: data.triggerCount,
           effect_count: data.effectCount,

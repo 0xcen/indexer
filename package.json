@@ -14,9 +14,10 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.27.0",
+    "@coral-xyz/anchor": "^0.28.1-beta.2",
     "@solana/web3.js": "^1.76.0",
     "@supabase/supabase-js": "^2.22.0",
+    "@triggr/sdk": "^0.1.1",
     "@types/yargs": "^17.0.24",
     "bn.js": "^5.2.1",
     "dotenv": "^16.0.3",

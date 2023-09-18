@@ -1,13 +1,12 @@
-import { PublicKey } from "@solana/web3.js";
-import { TRIGGR_PROGRAM_ID } from "./consts";
-import { connection, program, store } from "./main";
-import { DataType } from "./store";
-import { parseAccount } from "./utils/parseAccount";
+import { PublicKey } from '@solana/web3.js';
+
+import { TRIGGR_PROGRAM_ID, connection, store } from './main';
+import { DataType } from './store';
+import { parseAccount } from './utils/parseAccount';
 
 export const startIndexer = async () => {
   // 1) get signatures from db
   const sigs = await store.getSignatures();
-  console.log(`Fetched sig ${JSON.stringify(sigs, null, 2)} from db`);
 
   if (!sigs || sigs?.length === 0) return;
 
@@ -21,7 +20,7 @@ export const startIndexer = async () => {
   console.log(`Fetched ${latestSigs.length} new signatures`);
 
   if (!latestSigs || latestSigs.length === 0) {
-    console.log("No new signatures");
+    console.log('No new signatures');
     return;
   }
 
@@ -29,7 +28,7 @@ export const startIndexer = async () => {
   const txs = await connection.getParsedTransactions(
     latestSigs.map(data => data.signature),
     {
-      commitment: "confirmed",
+      commitment: 'confirmed',
       maxSupportedTransactionVersion: 1,
     }
   );
@@ -68,7 +67,6 @@ export const startIndexer = async () => {
     const data = Buffer.from(account!.data);
 
     const accountData = parseAccount(
-      program,
       uniqueWritableAccounts[index].toBase58(),
       data
     );

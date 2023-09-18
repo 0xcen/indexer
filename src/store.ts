@@ -4,7 +4,7 @@ import { SupabaseClient, createClient } from "@supabase/supabase-js";
 
 export enum DataType {
   User = "users",
-  Effect = "effects",
+  Task = "tasks",
   Trigger = "triggers",
   Signature = "signatures",
 }

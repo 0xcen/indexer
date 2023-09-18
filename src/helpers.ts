@@ -1,14 +1,13 @@
-import { TRIGGR_PROGRAM_ID } from "./consts";
-import { connection, store, program } from "./main";
-import { DataType } from "./store";
-import { parseAccount } from "./utils/parseAccount";
+import { connection, store, program, TRIGGR_PROGRAM_ID } from './main';
+import { DataType } from './store';
+import { parseAccount } from './utils/parseAccount';
 
 export const seedDb = async () => {
   try {
-    await store.client.from("users").delete().neq("pubkey", "0");
-    await store.client.from("signatures").delete().neq("signature", "0");
-    await store.client.from("effects").delete().neq("pubkey", "0");
-    await store.client.from("triggers").delete().neq("pubkey", "0");
+    await store.client.from('users').delete().neq('pubkey', '0');
+    await store.client.from('signatures').delete().neq('signature', '0');
+    await store.client.from('tasks').delete().neq('pubkey', '0');
+    await store.client.from('triggers').delete().neq('pubkey', '0');
 
     // 1) persist latest signature
     const latestSig = await connection.getConfirmedSignaturesForAddress2(
@@ -22,12 +21,11 @@ export const seedDb = async () => {
 
     // 2) get program accounts
     const accounts = await connection.getProgramAccounts(TRIGGR_PROGRAM_ID, {
-      commitment: "confirmed",
+      commitment: 'confirmed',
     });
 
     const parsedAccounts = accounts.map(account => {
       const parsedData = parseAccount(
-        program,
         account.pubkey.toBase58(),
         account.account.data
       );
@@ -61,7 +59,7 @@ export const seedDb = async () => {
       );
     }
   } catch (error) {
-    console.log("🚀 ~ file: main.ts:43 ~ seedDb ~ error:", error);
+    console.log('🚀 ~ file: main.ts:43 ~ seedDb ~ error:', error);
   }
 };
 
@@ -69,12 +67,11 @@ export const getAccounts = async () => {
   try {
     // 2) get program accounts
     const accounts = await connection.getProgramAccounts(TRIGGR_PROGRAM_ID, {
-      commitment: "confirmed",
+      commitment: 'confirmed',
     });
 
     const parsedAccounts = accounts.map(account => {
       const parsedData = parseAccount(
-        program,
         account.pubkey.toBase58(),
         account.account.data
       );
@@ -106,24 +103,22 @@ export const getAccounts = async () => {
       .flatMap(acc => acc.data.pubkey);
     return keys;
   } catch (error) {
-    console.log("🚀 ~ file: helpers.ts:104 ~ getAccounts ~ error:", error);
+    console.log('🚀 ~ file: helpers.ts:104 ~ getAccounts ~ error:', error);
   }
 };
 
 export const getStoreAccounts = async () => {
   try {
     const { data: triggers } = await store.client
-      .from("triggers")
-      .select("pubkey");
-    const { data: users } = await store.client.from("users").select("pubkey");
-    const { data: effects } = await store.client
-      .from("effects")
-      .select("pubkey");
+      .from('triggers')
+      .select('pubkey');
+    const { data: users } = await store.client.from('users').select('pubkey');
+    const { data: tasks } = await store.client.from('tasks').select('pubkey');
 
     const accounts = {
       triggers,
       users,
-      effects,
+      tasks,
     };
 
     const keys = Object.values(accounts)
@@ -131,6 +126,6 @@ export const getStoreAccounts = async () => {
       .flatMap(account => account?.pubkey);
     return keys;
   } catch (error) {
-    console.log("🚀 ~ file: helpers.ts:120 ~ getStoreAccounts ~ error:", error);
+    console.log('🚀 ~ file: helpers.ts:120 ~ getStoreAccounts ~ error:', error);
   }
 };

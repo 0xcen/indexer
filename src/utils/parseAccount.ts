@@ -1,13 +1,9 @@
-import { Program } from "@coral-xyz/anchor";
-import { ACCOUNT_DISCRIMINATORS } from "../consts";
-import { DataType } from "../store";
-import { Triggr } from "../triggr";
+import { Program } from '@coral-xyz/anchor';
+import { ACCOUNT_DISCRIMINATORS } from '../consts';
+import { DataType } from '../store';
+import { program } from '../main';
 
-export const parseAccount = (
-  program: Program<Triggr>,
-  accountId: string,
-  rawData: Buffer
-) => {
+export const parseAccount = (accountId: string, rawData: Buffer) => {
   const discriminator = Object.entries(ACCOUNT_DISCRIMINATORS).find(
     d =>
       JSON.stringify(d[1]) ==
@@ -20,11 +16,11 @@ export const parseAccount = (
     let parsedData: any = {};
 
     switch (discriminator[0]) {
-      case "Trigger":
+      case 'Trigger':
         parsedData = {
           created_at: data.createdAt,
           usage_stats: data.usageStats,
-          effect_count: data.effectCount,
+          task_count: data.taskCount,
           own_index: data.ownIndex,
           workflow_title: data.workflowTitle,
           authority: data.authority,
@@ -33,9 +29,9 @@ export const parseAccount = (
           lifetime: data.lifetime,
         };
         break;
-      case "Effect":
+      case 'Task':
         parsedData = {
-          ixs: data.ixs,
+          bundles: data.bundles,
           status: data.status,
           authority: data.authority,
           created_at: data.createdAt,
@@ -47,10 +43,10 @@ export const parseAccount = (
           lut: data.lut,
         };
         break;
-      case "User":
+      case 'User':
         parsedData = {
           trigger_count: data.triggerCount,
-          effect_count: data.effectCount,
+          task_count: data.taskCount,
           active_triggers: data.activeTriggers,
         };
         break;
